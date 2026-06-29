@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessSetting;
 use App\Models\User;
-use App\Models\Vendor;
-use App\Models\Cart;
 use App\Models\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +16,7 @@ use Carbon\Carbon;
 
 class AuthController extends Controller
 {
-   
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -25,7 +24,6 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
-            'role' => 'nullable|in:customer,vendor',
             'business_name' => 'nullable|string|max:255',
             'business_address' => 'nullable|string',
             'business_phone' => 'nullable|string',
@@ -47,27 +45,10 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
                 'phone' => $request->phone,
                 'role' => $request->role ?? 'customer',
-                'email_verified_at' => null 
+                'email_verified_at' => null
             ]);
 
-            // Create vendor record if role is vendor
-            $trial_ends_at = now()->addDays(10);
-            $settings = Settings::where('key', 'trial_days')->first();
-            if($settings && $settings->trial_days) {
-                $trial_ends_at = now()->addDays($$settings->trial_days);
-            }
-            if ($request->role === 'vendor') {
-                $vendor = Vendor::create([
-                    'user_id' => $user->id,
-                    'business_name' => $request->business_name,
-                    'business_address' => $request->business_address,
-                    'business_phone' => $request->business_phone,
-                    'trial_ends_at' => $trial_ends_at,
-                    'commission_rate' => 0,
-                    'is_active' => false // Needs admin approval
-                ]);
-            }
-            
+
             $this->sendVerificationEmail($user);
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -75,7 +56,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'User registered successfully. Please verify your email.',
                 'data' => [
-                    'user' => $user->load('vendor'),
+                    'user' => $user,
                     'token' => $token,
                     'token_type' => 'Bearer'
                 ]
@@ -89,7 +70,7 @@ class AuthController extends Controller
         }
     }
 
-   
+
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -155,19 +136,16 @@ class AuthController extends Controller
             ]);
 
             $logo = null;
-            if ($user->role == 'admin' || $user->role == 'customer') {
-                $logo = Settings::where('key', 'logo')->value('value');
-                $logo = asset('storage/company-logos/' . $logo);
-            } else {
-                $logo = $user->vendor->business_logo;
-                $logo = asset('storage/vendor-logos/' . $logo);
+            $settings = BusinessSetting::first();
+            if ($settings->logo) {
+                $logo = asset('storage/' . $settings->logo);
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful',
                 'data' => [
-                    'user' => $user->load(['vendor', 'vendor.products']),
+                    'user' => $user,
                     'logo' => $logo ?? null,
                     'token' => $token,
                     'token_type' => 'Bearer',
@@ -183,7 +161,7 @@ class AuthController extends Controller
         }
     }
 
-   
+
     public function logout(Request $request)
     {
         try {
@@ -202,13 +180,11 @@ class AuthController extends Controller
         }
     }
 
- 
+
     public function user(Request $request)
     {
         try {
             $user = $request->user()->load([
-                'vendor',
-                'vendor.products',
                 'orders' => function ($query) {
                     $query->latest()->limit(10);
                 },
@@ -551,8 +527,6 @@ class AuthController extends Controller
 
             // Revoke all tokens
             $user->tokens()->delete();
-
-            // Delete user (cascade will delete vendor, cart, etc.)
             $user->delete();
 
             return response()->json([

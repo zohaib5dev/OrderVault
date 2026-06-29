@@ -15,7 +15,7 @@
             <!-- Logo -->
             <router-link to="/customer/dashboard" class="flex items-center ml-2 md:mr-24">
               <img 
-                v-if="logoUrl && logoUrl.includes('/storage/company-logos/')" 
+                v-if="logoUrl && logoUrl.includes('/storage/logos/')" 
                 :src="logoUrl" 
                 alt="Logo" 
                 class="h-8 w-auto object-contain"

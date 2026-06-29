@@ -13,10 +13,9 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            $vendorId = Auth::user()->vendor->id;
+        try { 
 
-            $query = Category::where('vendor_id', $vendorId);
+            $query = Category::query();
             if ($request->filled('all')) {
                 $query = Category::query();
             }
@@ -60,9 +59,9 @@ class CategoryController extends Controller
 
             // Stats
             $stats = [
-                'total' => Category::where('vendor_id', $vendorId)->count(),
-                'active' => Category::where('vendor_id', $vendorId)->where('is_active', true)->count(),
-                'inactive' => Category::where('vendor_id', $vendorId)->where('is_active', false)->count(),
+                'total' => Category::count(),
+                'active' => Category::where('is_active', true)->count(),
+                'inactive' => Category::where('is_active', false)->count(),
             ];
 
             return response()->json([
@@ -82,17 +81,13 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $vendorId = Auth::user()->vendor->id;
+        try { 
 
             $validator = Validator::make($request->all(), [
                 'name' => [
                     'required',
                     'string',
-                    'max:255',
-                    Rule::unique('categories', 'name')->where(function ($query) use ($vendorId) {
-                        return $query->where('vendor_id', $vendorId);
-                    }),
+                    'max:255',                   
                 ],
                 'description' => 'nullable|string|max:1000',
                 'is_active' => 'boolean',
@@ -105,8 +100,7 @@ class CategoryController extends Controller
                 ], 422);
             }
 
-            $category = Category::create([
-                'vendor_id' => $vendorId,
+            $category = Category::create([ 
                 'name' => $request->name,
                 'description' => $request->description,
                 'is_active' => $request->is_active ?? true,
@@ -130,11 +124,9 @@ class CategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
-        try {
-            $vendorId = Auth::user()->vendor->id;
+        try { 
 
-            $category = Category::where('vendor_id', $vendorId)
-                ->where('id', $id)
+            $category = Category::where('id', $id)
                 ->firstOrFail();
 
             $validator = Validator::make($request->all(), [
@@ -142,9 +134,6 @@ class CategoryController extends Controller
                     'required',
                     'string',
                     'max:255',
-                    Rule::unique('categories', 'name')
-                        ->where('vendor_id', $vendorId)
-                        ->ignore($category->id),
                 ],
                 'description' => 'nullable|string|max:1000',
                 'is_active' => 'boolean',
@@ -183,10 +172,8 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         try {
-            $vendorId = Auth::user()->vendor->id;
 
-            $category = Category::where('vendor_id', $vendorId)
-                ->where('id', $id)
+            $category = Category::where('id', $id)
                 ->firstOrFail();
 
             // Check if category has products
@@ -212,10 +199,9 @@ class CategoryController extends Controller
 
 
     public function getActive()
-    {
-        $vendorId = Auth::user()->vendor->id;
+    { 
 
-        $query = Category::where('vendor_id', $vendorId)->where('is_active', true)->get();
+        $query = Category::where('is_active', true)->get();
         return response()->json([
             'data' => $query
         ], 200);

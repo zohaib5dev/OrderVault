@@ -95,10 +95,10 @@
                        :class="isDarkMode ? 'border-blue-500 bg-gray-700' : 'border-blue-500 bg-gray-50'">
                     <img :src="logoPreviewUrl" alt="Logo Preview" class="w-full h-full object-cover">
                   </div>
-                  <div v-else-if="settings.business_logo" 
+                  <div v-else-if="settings.logo" 
                        class="w-24 h-24 rounded-xl border-2 overflow-hidden"
                        :class="isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'">
-                    <img :src="getLogoUrl(settings.business_logo)" alt="Business Logo" class="w-full h-full object-cover">
+                    <img :src="getLogoUrl(settings.logo)" alt="Business Logo" class="w-full h-full object-cover">
                   </div>
                   <div v-else 
                        class="w-24 h-24 rounded-xl border-2 border-dashed flex items-center justify-center"
@@ -143,19 +143,19 @@
               </label>
               <input 
                 type="text" 
-                v-model="settings.business_name" 
-                @blur="validateField('business_name')"
+                v-model="settings.name" 
+                @blur="validateField('name')"
                 class="w-full rounded-lg px-4 py-2.5 transition-colors"
                 :class="[
                   isDarkMode 
                     ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500' 
                     : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  errors.business_name ? 'border-red-500 dark:border-red-500' : ''
+                  errors.name ? 'border-red-500 dark:border-red-500' : ''
                 ]"
                 placeholder="Enter your business name"
                 required
               >
-              <p v-if="errors.business_name" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.business_name }}</p>
+              <p v-if="errors.name" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.name }}</p>
             </div>
 
             <!-- Business Email -->
@@ -171,19 +171,19 @@
                 </svg>
                 <input 
                   type="email" 
-                  v-model="settings.business_email" 
-                  @blur="validateField('business_email')"
+                  v-model="settings.email" 
+                  @blur="validateField('email')"
                   class="w-full rounded-lg pl-10 pr-4 py-2.5 transition-colors"
                   :class="[
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500' 
                       : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                    errors.business_email ? 'border-red-500 dark:border-red-500' : ''
+                    errors.email ? 'border-red-500 dark:border-red-500' : ''
                   ]"
                   placeholder="business@example.com"
                 >
               </div>
-              <p v-if="errors.business_email" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.business_email }}</p>
+              <p v-if="errors.email" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.email }}</p>
             </div>
 
             <!-- Business Phone -->
@@ -199,7 +199,7 @@
                 </svg>
                 <input 
                   type="tel" 
-                  v-model="settings.business_phone" 
+                  v-model="settings.phone" 
                   class="w-full rounded-lg pl-10 pr-4 py-2.5 transition-colors"
                   :class="[
                     isDarkMode 
@@ -224,19 +224,19 @@
                 </svg>
                 <input 
                   type="url" 
-                  v-model="settings.business_website" 
-                  @blur="validateField('business_website')"
+                  v-model="settings.website" 
+                  @blur="validateField('website')"
                   class="w-full rounded-lg pl-10 pr-4 py-2.5 transition-colors"
                   :class="[
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500' 
                       : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                    errors.business_website ? 'border-red-500 dark:border-red-500' : ''
+                    errors.website ? 'border-red-500 dark:border-red-500' : ''
                   ]"
                   placeholder="https://example.com"
                 >
               </div>
-              <p v-if="errors.business_website" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.business_website }}</p>
+              <p v-if="errors.website" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.website }}</p>
             </div>
 
             <!-- Business Address - Full Width -->
@@ -252,21 +252,21 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 <textarea 
-                  v-model="settings.business_address" 
-                  @blur="validateField('business_address')"
+                  v-model="settings.address" 
+                  @blur="validateField('address')"
                   class="w-full rounded-lg pl-10 pr-4 py-2.5 transition-colors resize-y"
                   :class="[
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500' 
                       : 'border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                    errors.business_address ? 'border-red-500 dark:border-red-500' : ''
+                    errors.address ? 'border-red-500 dark:border-red-500' : ''
                   ]"
                   rows="3"
                   placeholder="Enter your full business address"
                   required
                 ></textarea>
               </div>
-              <p v-if="errors.business_address" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.business_address }}</p>
+              <p v-if="errors.address" class="text-xs text-red-600 dark:text-red-400 mt-1">{{ errors.address }}</p>
             </div>
           </div>
         </div>
@@ -381,46 +381,6 @@
               </p>
             </div>
 
-            <!-- Commission Rate (Read Only) -->
-            <div>
-              <label class="block text-sm font-medium mb-1.5" :class="isDarkMode ? 'text-gray-300' : 'text-gray-700'">
-                Commission Rate <span class="text-gray-400 dark:text-gray-500 text-xs">(Platform Set)</span>
-              </label>
-              <div class="flex flex-col sm:flex-row gap-2">
-                <div class="flex-1">
-                  <input 
-                    type="number" 
-                    step="0.01" 
-                    v-model="settings.commission_rate" 
-                    class="w-full rounded-lg px-4 py-2.5 cursor-not-allowed transition-colors"
-                    :class="[
-                      isDarkMode 
-                        ? 'bg-gray-700/50 border-gray-600 text-gray-400' 
-                        : 'border border-gray-200 bg-gray-50 text-gray-600'
-                    ]"
-                    min="0"
-                    readonly
-                    disabled
-                  >
-                </div>
-                <div class="w-full sm:w-28">
-                  <select v-model="settings.commission_type" 
-                          class="w-full rounded-lg px-3 py-2.5 cursor-not-allowed transition-colors"
-                          :class="[
-                            isDarkMode 
-                              ? 'bg-gray-700/50 border-gray-600 text-gray-400' 
-                              : 'border border-gray-200 bg-gray-50 text-gray-600'
-                          ]"
-                          disabled>
-                    <option value="percentage">%</option>
-                    <option value="fixed">Fixed</option>
-                  </select>
-                </div>
-              </div>
-              <p class="text-xs mt-1" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
-                Commission rate is configured by the platform administrator
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -479,27 +439,24 @@ import axios from 'axios';
 export default {
   setup() {
     const settings = ref({
-      business_name: '',
-      business_email: '',
-      business_phone: '',
-      business_website: '',
-      business_address: '',
+      name: '',
+      email: '',
+      phone: '',
+      website: '',
+      address: '',
       tax_type: 'percentage',
       tax_rate: 0,
-      commission_type: 'percentage',
-      commission_rate: 0,
       registration_number: '',
       currency: 'USD',
-      business_logo: null
+      logo: null
     });
 
     const errors = ref({
-      business_name: '',
-      business_email: '',
-      business_website: '',
-      business_address: '',
+      name: '',
+      email: '',
+      website: '',
+      address: '',
       tax_rate: '',
-      commission_rate: '',
       logo: ''
     });
 
@@ -548,35 +505,35 @@ export default {
 
     const validateField = (field) => {
       switch(field) {
-        case 'business_name':
-          if (!settings.value.business_name || settings.value.business_name.trim() === '') {
-            errors.value.business_name = 'Business name is required';
+        case 'name':
+          if (!settings.value.name || settings.value.name.trim() === '') {
+            errors.value.name = 'Business name is required';
           } else {
-            errors.value.business_name = '';
+            errors.value.name = '';
           }
           break;
           
-        case 'business_email':
-          if (settings.value.business_email && !isValidEmail(settings.value.business_email)) {
-            errors.value.business_email = 'Please enter a valid email address';
+        case 'email':
+          if (settings.value.email && !isValidEmail(settings.value.email)) {
+            errors.value.email = 'Please enter a valid email address';
           } else {
-            errors.value.business_email = '';
+            errors.value.email = '';
           }
           break;
           
-        case 'business_website':
-          if (settings.value.business_website && !isValidUrl(settings.value.business_website)) {
-            errors.value.business_website = 'Please enter a valid URL (e.g., https://example.com)';
+        case 'website':
+          if (settings.value.website && !isValidUrl(settings.value.website)) {
+            errors.value.website = 'Please enter a valid URL (e.g., https://example.com)';
           } else {
-            errors.value.business_website = '';
+            errors.value.website = '';
           }
           break;
           
-        case 'business_address':
-          if (!settings.value.business_address || settings.value.business_address.trim() === '') {
-            errors.value.business_address = 'Business address is required';
+        case 'address':
+          if (!settings.value.address || settings.value.address.trim() === '') {
+            errors.value.address = 'Business address is required';
           } else {
-            errors.value.business_address = '';
+            errors.value.address = '';
           }
           break;
           
@@ -606,23 +563,23 @@ export default {
     const validateAll = () => {
       let isValid = true;
       
-      if (!settings.value.business_name || settings.value.business_name.trim() === '') {
-        errors.value.business_name = 'Business name is required';
+      if (!settings.value.name || settings.value.name.trim() === '') {
+        errors.value.name = 'Business name is required';
         isValid = false;
       }
       
-      if (!settings.value.business_address || settings.value.business_address.trim() === '') {
-        errors.value.business_address = 'Business address is required';
+      if (!settings.value.address || settings.value.address.trim() === '') {
+        errors.value.address = 'Business address is required';
         isValid = false;
       }
       
-      if (settings.value.business_email && !isValidEmail(settings.value.business_email)) {
-        errors.value.business_email = 'Please enter a valid email address';
+      if (settings.value.email && !isValidEmail(settings.value.email)) {
+        errors.value.email = 'Please enter a valid email address';
         isValid = false;
       }
       
-      if (settings.value.business_website && !isValidUrl(settings.value.business_website)) {
-        errors.value.business_website = 'Please enter a valid URL (e.g., https://example.com)';
+      if (settings.value.website && !isValidUrl(settings.value.website)) {
+        errors.value.website = 'Please enter a valid URL (e.g., https://example.com)';
         isValid = false;
       }
       
@@ -663,17 +620,17 @@ export default {
 
     const fetchSettings = async () => {
       try {
-        const response = await axios.get('/api/vendor/settings');
+        const response = await axios.get('/api/admin/settings');
         settings.value = {
           ...settings.value,
           ...response.data
         };
         
         // Update localStorage and dispatch event only once
-        if (response.data.business_logo) {
-          const fullUrl = response.data.business_logo.startsWith('http') 
-            ? response.data.business_logo 
-            : getFullLogoUrl(response.data.business_logo);
+        if (response.data.logo) {
+          const fullUrl = response.data.logo.startsWith('http') 
+            ? response.data.logo 
+            : getFullLogoUrl(response.data.logo);
           localStorage.setItem('logo', fullUrl);
           // Dispatch event to update top menu bar
           window.dispatchEvent(new CustomEvent('logo-updated', { 
@@ -735,12 +692,11 @@ export default {
     const updateSettings = async () => {
       // Clear previous errors
       errors.value = {
-        business_name: '',
-        business_email: '',
-        business_website: '',
-        business_address: '',
+        name: '',
+        email: '',
+        website: '',
+        address: '',
         tax_rate: '',
-        commission_rate: '',
         logo: ''
       };
       
@@ -760,35 +716,32 @@ export default {
         const formData = new FormData();
         
         // Append all form fields
-        formData.append('business_name', settings.value.business_name || '');
-        formData.append('business_email', settings.value.business_email || '');
-        formData.append('business_phone', settings.value.business_phone || '');
-        formData.append('business_website', settings.value.business_website || '');
-        formData.append('business_address', settings.value.business_address || '');
+        formData.append('name', settings.value.name || '');
+        formData.append('email', settings.value.email || '');
+        formData.append('phone', settings.value.phone || '');
+        formData.append('website', settings.value.website || '');
+        formData.append('address', settings.value.address || '');
         formData.append('tax_type', settings.value.tax_type || 'percentage');
         formData.append('tax_rate', settings.value.tax_rate || 0);
-        formData.append('commission_type', settings.value.commission_type || 'percentage');
-        formData.append('commission_rate', settings.value.commission_rate || 0);
         formData.append('registration_number', settings.value.registration_number || '');
         formData.append('currency', settings.value.currency || 'USD');
         
         // Append logo file if selected
         if (logoFile.value) {
-          formData.append('business_logo', logoFile.value);
+          formData.append('logo', logoFile.value);
         }
         
-        const response = await axios.post('/api/vendor/settings', formData, {
+        const response = await axios.post('/api/admin/settings', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'X-HTTP-Method-Override': 'PUT'
-          }
+            }
         });
         
         // Update settings with response
-        if (response.data.business_logo) {
-          settings.value.business_logo = response.data.business_logo;
+        if (response.data.logo) {
+          settings.value.logo = response.data.logo;
           // Update localStorage and dispatch event once
-          updateLogoInStorage(response.data.business_logo);
+          updateLogoInStorage(response.data.logo);
           
           // Clear preview after successful upload
           if (logoPreviewUrl.value) {
@@ -800,7 +753,7 @@ export default {
         
         // Update other fields if they were changed
         Object.keys(response.data).forEach(key => {
-          if (key !== 'business_logo' && settings.value.hasOwnProperty(key)) {
+          if (key !== 'logo' && settings.value.hasOwnProperty(key)) {
             settings.value[key] = response.data[key];
           }
         });
@@ -861,12 +814,11 @@ export default {
         if (fileInput) fileInput.value = '';
         
         errors.value = {
-          business_name: '',
-          business_email: '',
-          business_website: '',
-          business_address: '',
+          name: '',
+          email: '',
+          website: '',
+          address: '',
           tax_rate: '',
-          commission_rate: '',
           logo: ''
         };
         fetchSettings();

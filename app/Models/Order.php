@@ -12,8 +12,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number',
-        'vendor_id',
-        'customer_id',
+         'customer_id',
         'customer_email',
         'customer_phone',
         'shipping_address',
@@ -65,11 +64,6 @@ class Order extends Model
     }
 
     // Relationships
-    public function vendor()
-    {
-        return $this->belongsTo(Vendor::class);
-    }
-
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
@@ -167,19 +161,7 @@ class Order extends Model
         $this->save();
 
         return $this;
-    }
-
-    public function calculateCommission()
-    {
-        if ($this->vendor) {
-            $commission = $this->vendor->calculateCommission($this->total_amount);
-            $this->commission_amount = $commission;
-            $this->save();
-        }
-        return $this;
-    }
-
-   
+    }  
 
     public function canCancel()
     {
@@ -211,12 +193,7 @@ class Order extends Model
     {
         return $query->where('status', 'cancelled');
     }
-
-    public function scopeByVendor($query, $vendorId)
-    {
-        return $query->where('vendor_id', $vendorId);
-    }
-
+    
     public function scopeByCustomer($query, $customerId)
     {
         return $query->where('customer_id', $customerId);

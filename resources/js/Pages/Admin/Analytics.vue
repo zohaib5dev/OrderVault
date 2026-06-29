@@ -53,7 +53,7 @@
     <!-- Analytics Content -->
     <div v-else-if="analytics" class="space-y-6">
       <!-- Key Metrics Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4">
         <div :class="[
           'rounded-2xl shadow-lg p-5 border-l-4 border-blue-500',
           isDarkMode ? 'bg-gray-800' : 'bg-white'
@@ -112,27 +112,9 @@
               </svg>
             </div>
           </div>
-        </div>
+        </div> 
 
-        <div :class="[
-          'rounded-2xl shadow-lg p-5 border-l-4 border-orange-500',
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        ]">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">Conversion Rate</p>
-              <p class="text-2xl font-bold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ analytics.metrics.conversion_rate }}%</p>
-              <p class="text-xs" :class="analytics.metrics.conversion_growth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                {{ analytics.metrics.conversion_growth >= 0 ? '↑' : '↓' }} {{ Math.abs(analytics.metrics.conversion_growth) }}% from last period
-              </p>
-            </div>
-            <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
-              <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-            </div>
-          </div>
-        </div>
+        
       </div>
 
       <!-- Charts Grid -->

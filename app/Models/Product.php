@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Models;
 
@@ -11,7 +11,6 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'vendor_id',
         'category_id',
         'name',
         'slug',
@@ -55,24 +54,19 @@ class Product extends Model
     }
 
     // Relationships
-    public function vendor()
-    {
-        return $this->belongsTo(Vendor::class);
-    }
-
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
 
-    
+
 
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
     }
 
- 
+
 
     // Accessors
     public function getFormattedPriceAttribute()
@@ -96,7 +90,7 @@ class Product extends Model
 
 
 
-   
+
 
 
     public function getIsInStockAttribute()
@@ -187,11 +181,6 @@ class Product extends Model
             ->where('stock_quantity', '<=', 10);
     }
 
-    public function scopeByVendor($query, $vendorId)
-    {
-        return $query->where('vendor_id', $vendorId);
-    }
-
     public function scopeByCategory($query, $categoryId)
     {
         return $query->where('category_id', $categoryId);
@@ -220,6 +209,4 @@ class Product extends Model
         return $query->withCount('orderItems')
             ->orderBy('order_items_count', $direction);
     }
-
-  
 }

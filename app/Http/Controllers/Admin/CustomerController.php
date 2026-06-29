@@ -18,14 +18,6 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        $vendor = Auth::user()->vendor;
-
-        if (!$vendor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vendor not found'
-            ], 404);
-        }
 
         $query = User::where('role', 'customer');
 
@@ -70,27 +62,11 @@ class CustomerController extends Controller
         $perPage = $request->get('per_page', 10);
         $customers = $query->paginate($perPage);
 
-        // Transform the data to include total_spent
-        $customers->getCollection()->transform(function ($customer) use ($vendor) {
-            // Calculate total spent for this vendor
-            $totalSpent = Order::where('vendor_id', $vendor->id)
-                ->where('customer_id', $customer->id)
-                ->where('payment_status', 'paid')
+         $totalSpent = Order::where('payment_status', 'paid')
                 ->sum('total_amount');
 
-            return [
-                'id' => $customer->id,
-                'name' => $customer->name,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
-                'address' => $customer->address,
-                'status' => $customer->email_verified_at ? 'active' : 'inactive',
-                'orders_count' => $customer->orders->count() ?? 0,
-                'total_spent' => $totalSpent ?? 0,
-                'created_at' => $customer->created_at,
-                'updated_at' => $customer->updated_at,
-            ];
-        });
+
+        
 
         $stats = [
             'total_customers' => User::where('role', 'customer')->count(),

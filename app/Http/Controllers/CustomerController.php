@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessSetting;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Vendor;
+use App\Models\OrderItem; 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +24,7 @@ class CustomerController extends Controller
 
             // Get customer orders
             $orders = Order::where('customer_id', $customer->id)
-                ->with(['vendor', 'items.product'])
+                ->with(['items.product'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -62,9 +62,6 @@ class CustomerController extends Controller
                 ? round((($thisMonthSpent - $lastMonthSpent) / $lastMonthSpent) * 100, 1)
                 : ($thisMonthSpent > 0 ? 100 : 0);
 
-            // Get vendor stats (vendors the customer has ordered from)
-            $vendorIds = $orders->pluck('vendor_id')->unique()->filter();
-            $totalVendors = $vendorIds->count();
 
             // Get products the customer has purchased
             $productIds = OrderItem::whereIn('order_id', $orders->pluck('id'))
@@ -112,7 +109,6 @@ class CustomerController extends Controller
                 'pending_growth' => $pendingGrowth,
                 'completed_growth' => $completedGrowth,
                 'spent_growth' => $spentGrowth,
-                'total_vendors' => $totalVendors,
                 'total_products' => $totalProducts,
             ];
 
@@ -127,7 +123,6 @@ class CustomerController extends Controller
                             'total_amount' => $order->total_amount,
                             'status' => $order->status,
                             'payment_status' => $order->payment_status,
-                            'vendor_name' => $order->vendor ? $order->vendor->business_name : null,
                             'customer_name' => $order->customer_name ?? 'Guest',
                             'customer_email' => $order->customer_email ?? '',
                             'created_at' => $order->created_at,
@@ -152,7 +147,7 @@ class CustomerController extends Controller
             $customer = Auth::user();
             $order = Order::where('customer_id', $customer->id)
                 ->where('id', $id)
-                ->with(['vendor', 'items.product', 'items.product.vendor'])
+                ->with(['items.product', 'items.product'])
                 ->first();
             if (!$order) {
                 return response()->json([
@@ -160,7 +155,7 @@ class CustomerController extends Controller
                     'message' => 'Order not found'
                 ], 404);
             }
-            $order->load(['vendor', 'customer', 'items.product']);
+            $order->load(['customer', 'items.product']);
 
             return response()->json(['order' => $order, 'stripe_key' => config('services.stripe.key')]);
         } catch (\Exception $e) {
@@ -175,18 +170,10 @@ class CustomerController extends Controller
     public function downloadInvoice(Request $request, $id)
     {
         $order = Order::with(['customer', 'items.product'])->findOrFail($id);
-
-        $vendor = Vendor::find($order->vendor_id);
-        if (!$vendor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vendor not found'
-            ], 404);
-        }
-
+        $settings = BusinessSetting::first();
         $logoPath = null;
-        if ($vendor->business_logo) {
-            $logoPath = public_path('storage/' . $vendor->business_logo);
+        if ($settings->logo) {
+            $logoPath = public_path('storage/' . $settings->logo);
         }
         $data = [
             'invoice' => [
@@ -194,23 +181,20 @@ class CustomerController extends Controller
                 'invoice_number' => 'INV-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
                 'date' => $order->created_at->format('F d, Y'),
             ],
-            'vendor' => $vendor,
+            'settings' => $settings,
             'logoPath' => $logoPath,
             'order' => $order->toArray(),
             'customer' => $order->customer->toArray(),
             'items' => $order->items->toArray(),
             'shipping_address' => $order->shipping_address,
             'billing_address' => $order->billing_address,
-            'company' => [
-                'name' => config('app.name', 'Your Company'),
-                'tagline' => 'Premium Services',
-                'address' => '123 Business St, City, State 12345',
-                'email' => 'info@company.com',
-                'phone' => '+1 (555) 123-4567',
-            ]
         ];
 
+        // Generate PDF
         $pdf = Pdf::loadView('order.invoice', $data);
+
+
+        // Generate filename
         $filename = "invoice-{$order->order_number}.pdf";
         return $pdf->download($filename);
     }
@@ -222,7 +206,7 @@ class CustomerController extends Controller
             $customer = Auth::user();
             $order = Order::where('customer_id', $customer->id)
                 ->where('id', $id)
-                ->with(['vendor', 'items.product'])
+                ->with(['items.product'])
                 ->first();
 
             if (!$order) {
@@ -245,85 +229,40 @@ class CustomerController extends Controller
 
             Stripe::setApiKey(config('services.stripe.secret'));
 
-            $vendor = $order->vendor;
-            $isAdmin = $vendor->user->role == 'admin';
 
             // Calculate amounts
             $totalAmount = $order->total_amount;
-            $commissionRate = $vendor->commission_rate;
-            $commissionAmount = $order->commission_amount;
-
+         
             // Convert to cents for Stripe
             $totalCents = (int) round($totalAmount * 100);
-            $commissionCents = (int) round($commissionAmount * 100);
 
             $stripeCustomer = $this->getOrCreateStripeCustomer(Auth::user());
 
             DB::beginTransaction();
 
             try {
-                if ($isAdmin) {
-                    $paymentIntent = PaymentIntent::create([
-                        'amount' => $totalCents,
-                        'currency' => 'usd',
-                        'customer' => $stripeCustomer->id,
-                        'confirm' => true,
-                        'payment_method' => $request->payment_method_id,
-                        'off_session' => false,
-                        'automatic_payment_methods' => [
-                            'enabled' => true,
-                            'allow_redirects' => 'never',
-                        ],
-                        'metadata' => [
-                            'order_id' => $order->id,
-                            'order_number' => $order->order_number,
-                            'customer_id' => $customer->id,
-                            'vendor_id' => $vendor->id,
-                            'vendor_amount' => $totalAmount,
-                            'commission_amount' => $commissionAmount,
-                            'commission_rate' => $commissionRate,
-                            'payment_type' => 'direct_to_admin'
-                        ],
-                    ]);
-                } else {
-                     // Check if vendor has a Stripe account
-                    if (!$vendor->stripe_account_id) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Vendor is not set up to receive payments. Please contact support.'
-                        ], 400);
-                    }
-
-                    $paymentIntent = PaymentIntent::create([
-                        'amount' => $totalCents,
-                        'currency' => 'usd',
-                        'customer' => $stripeCustomer->id,
-                        'confirm' => true,
-                        'payment_method' => $request->payment_method_id,
-                        'off_session' => false,
-                        'automatic_payment_methods' => [
-                            'enabled' => true,
-                            'allow_redirects' => 'never',
-                        ],
-                        'application_fee_amount' => $commissionCents,
-                        'transfer_data' => [
-                            'destination' => $vendor->stripe_account_id,
-                        ],
-                        'metadata' => [
-                            'order_id' => $order->id,
-                            'order_number' => $order->order_number,
-                            'customer_id' => $customer->id,
-                            'vendor_id' => $vendor->id,
-                            'vendor_amount' => $totalAmount,
-                            'commission_amount' => $commissionAmount,
-                            'commission_rate' => $commissionRate,
-                            'payment_type' => 'vendor_transfer'
-                        ],
-                    ]);
-                }
+                $paymentIntent = PaymentIntent::create([
+                    'amount' => $totalCents,
+                    'currency' => 'usd',
+                    'customer' => $stripeCustomer->id,
+                    'confirm' => true,
+                    'payment_method' => $request->payment_method_id,
+                    'off_session' => false,
+                    'automatic_payment_methods' => [
+                        'enabled' => true,
+                        'allow_redirects' => 'never',
+                    ],
+                    'metadata' => [
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'customer_id' => $customer->id, 
+                        'amount' => $totalAmount,  
+                        'payment_type' => 'direct_to_admin'
+                    ],
+                ]);
 
                 // If payment succeeded
-                if ($paymentIntent->status === 'succeeded') { 
+                if ($paymentIntent->status === 'succeeded') {
 
                     $order->payment_status = 'paid';
 
@@ -351,8 +290,7 @@ class CustomerController extends Controller
                         'requires_action' => true,
                         'payment_intent_client_secret' => $paymentIntent->client_secret,
                         'message' => 'Additional authentication required',
-                        'payment_type' => $isAdmin ? 'direct_admin' : 'vendor_transfer'
-                    ]);
+                      ]);
                 }
 
                 DB::commit();

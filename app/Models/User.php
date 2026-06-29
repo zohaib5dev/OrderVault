@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Models;
 
@@ -42,18 +42,13 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     // Relationships
-    public function vendor()
-    {
-        return $this->hasOne(Vendor::class);
-    }
 
-    
     public function orders()
     {
         return $this->hasMany(Order::class, 'customer_id');
     }
 
-   
+
 
     // Accessors
     public function getAvatarUrlAttribute()
@@ -80,11 +75,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // Role checks
-    public function isVendor()
-    {
-        return $this->role === 'vendor' || $this->vendor()->exists();
-    }
-
     public function isAdmin()
     {
         return $this->role === 'admin';

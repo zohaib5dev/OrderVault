@@ -10,14 +10,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 
 
-use App\Http\Controllers\Admin\AnalyticsController as AdminAnalyticsController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
-use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\BusinessSettingController;
 use App\Http\Controllers\ProfileController;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -50,12 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('admin/categories', CategoryController::class);
     Route::get('admin/analytics', [AnalyticsController::class, 'analytics']);
  
-    Route::get('admin/settings', [SettingsController::class, 'index']);
-    Route::post('admin/settings', [SettingsController::class, 'store']);
-    Route::put('admin/settings/{key}', [SettingsController::class, 'update']);
-    Route::patch('admin/settings/{key}/toggle', [SettingsController::class, 'toggle']);
-    Route::delete('admin/settings/{key}', [SettingsController::class, 'destroy']);
-    Route::post('admin/settings/logo', [SettingsController::class, 'uploadLogo']);
+    Route::get('admin/settings', [BusinessSettingController::class, 'index']);
+    Route::post('admin/settings', [BusinessSettingController::class, 'store']);
 
 
     Route::get('customer/dashboard', [CustomerController::class, 'dashboard']);

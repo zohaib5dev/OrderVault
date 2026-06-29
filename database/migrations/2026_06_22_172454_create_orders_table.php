@@ -14,16 +14,14 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number')->unique();
-            $table->foreignId('vendor_id')->constrained();
-            $table->foreignId('customer_id')->constrained('users');
+             $table->foreignId('customer_id')->constrained('users');
             $table->text('shipping_address')->nullable();
             $table->text('billing_address')->nullable();
             $table->decimal('subtotal', 10, 2);
             $table->decimal('tax_amount', 10, 2)->default(0);
             $table->decimal('shipping_cost', 10, 2)->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
-            $table->decimal('commission_amount', 10, 2)->default(0);
-            $table->decimal('total_amount', 10, 2);
+             $table->decimal('total_amount', 10, 2);
             $table->string('currency')->default('usd');
             $table->string('status')->default('pending');
             $table->string('payment_status')->default('pending');
@@ -37,7 +35,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['vendor_id', 'status']);
+            $table->index([  'status']);
             $table->index(['customer_id', 'status']);
             $table->index('order_number');
         });

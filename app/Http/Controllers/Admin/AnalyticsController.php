@@ -11,49 +11,36 @@ use Illuminate\Support\Facades\Auth;
 
 class AnalyticsController extends Controller
 {
-    /**
-     * Get vendor analytics data.
-     */
     public function analytics(Request $request)
     {
-        $vendor = Auth::user()->vendor;
-        
-        if (!$vendor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vendor not found'
-            ], 404);
-        }
 
         $days = $request->get('days', 30);
         $startDate = now()->subDays($days);
         $previousStartDate = now()->subDays($days * 2);
 
         // Get orders for current period
-        $currentPeriodOrders = Order::where('vendor_id', $vendor->id)
-            ->where('created_at', '>=', $startDate)
+        $currentPeriodOrders = Order::where('created_at', '>=', $startDate)
             ->get();
 
         // Get orders for previous period
-        $previousPeriodOrders = Order::where('vendor_id', $vendor->id)
-            ->whereBetween('created_at', [$previousStartDate, $startDate])
+        $previousPeriodOrders = Order::whereBetween('created_at', [$previousStartDate, $startDate])
             ->get();
 
         // Calculate metrics
         $metrics = $this->calculateMetrics($currentPeriodOrders, $previousPeriodOrders);
 
         // Get chart data
-        $revenueData = $this->getRevenueChartData($vendor->id, $startDate);
-        $ordersData = $this->getOrdersChartData($vendor->id, $startDate);
+        $revenueData = $this->getRevenueChartData($startDate);
+        $ordersData = $this->getOrdersChartData($startDate);
 
         // Get top products
-        $topProducts = $this->getTopProducts($vendor->id, $startDate);
+        $topProducts = $this->getTopProducts($startDate);
 
         // Get order status distribution
-        $orderStatusDistribution = $this->getOrderStatusDistribution($vendor->id, $startDate);
+        $orderStatusDistribution = $this->getOrderStatusDistribution($startDate);
 
         // Get recent orders
-        $recentOrders = $this->getRecentOrders($vendor->id);
+        $recentOrders = $this->getRecentOrders();
 
         return response()->json([
             'success' => true,
@@ -102,31 +89,23 @@ class AnalyticsController extends Controller
         $aovGrowth = $previousAOV > 0 
             ? round((($averageOrderValue - $previousAOV) / $previousAOV) * 100, 1)
             : 0;
-
-        // Conversion rate (would need visitor data from analytics)
-        // For now, we'll use mock data or calculate from available data
-        $conversionRate = 2.4; // This should be calculated from actual visitor data
-        $conversionGrowth = 0.5; // This should be calculated from actual visitor data
-
+ 
         return [
             'total_revenue' => $totalRevenue,
             'revenue_growth' => $revenueGrowth,
             'total_orders' => $totalOrders,
             'orders_growth' => $ordersGrowth,
             'average_order_value' => $averageOrderValue,
-            'aov_growth' => $aovGrowth,
-            'conversion_rate' => $conversionRate,
-            'conversion_growth' => $conversionGrowth
+            'aov_growth' => $aovGrowth, 
         ];
     }
 
     /**
      * Get revenue data for chart.
      */
-    private function getRevenueChartData($vendorId, $startDate)
+    private function getRevenueChartData($startDate)
     {
-        $orders = Order::where('vendor_id', $vendorId)
-        ->where('payment_status', 'paid')
+        $orders = Order::where('payment_status', 'paid')
             ->where('created_at', '>=', $startDate)
             ->get()
             ->groupBy(function ($order) {
@@ -152,10 +131,9 @@ class AnalyticsController extends Controller
     /**
      * Get orders data for chart.
      */
-    private function getOrdersChartData($vendorId, $startDate)
+    private function getOrdersChartData($startDate)
     {
-        $orders = Order::where('vendor_id', $vendorId)
-            ->where('created_at', '>=', $startDate)
+        $orders = Order::where('created_at', '>=', $startDate)
             ->get()
             ->groupBy(function ($order) {
                 return $order->created_at->format('Y-m-d');
@@ -180,12 +158,11 @@ class AnalyticsController extends Controller
     /**
      * Get top selling products.
      */
-    private function getTopProducts($vendorId, $startDate)
+    private function getTopProducts($startDate)
     {
         // Get order items from orders in the period
-        $orderItems = OrderItem::whereHas('order', function ($query) use ($vendorId, $startDate) {
-            $query->where('vendor_id', $vendorId)
-                ->where('created_at', '>=', $startDate);
+        $orderItems = OrderItem::whereHas('order', function ($query) use ($startDate) {
+            $query->where('created_at', '>=', $startDate);
         })
         ->with('product')
         ->get();
@@ -221,10 +198,9 @@ class AnalyticsController extends Controller
     /**
      * Get order status distribution.
      */
-    private function getOrderStatusDistribution($vendorId, $startDate)
+    private function getOrderStatusDistribution($startDate)
     {
-        $orders = Order::where('vendor_id', $vendorId)
-            ->where('created_at', '>=', $startDate)
+        $orders = Order::where('created_at', '>=', $startDate)
             ->get();
 
         $totalOrders = $orders->count();
@@ -274,10 +250,9 @@ class AnalyticsController extends Controller
     /**
      * Get recent orders.
      */
-    private function getRecentOrders($vendorId)
+    private function getRecentOrders()
     {
-        return Order::where('vendor_id', $vendorId)
-            ->with('customer')
+        return Order::with('customer')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -293,85 +268,5 @@ class AnalyticsController extends Controller
             });
     }
 
-    /**
-     * Get vendor dashboard stats.
-     */
-    public function dashboardStats()
-    {
-        $vendor = Auth::user()->vendor;
-        
-        if (!$vendor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vendor not found'
-            ], 404);
-        }
-
-        // Get total orders
-        $totalOrders = Order::where('vendor_id', $vendor->id)->count();
-
-        // Get pending orders
-        $pendingOrders = Order::where('vendor_id', $vendor->id)
-            ->where('status', 'pending')
-            ->count();
-
-        // Get total revenue
-        $totalRevenue = Order::where('vendor_id', $vendor->id)
-            ->where('status', '!=', 'cancelled')
-            ->sum('total_amount');
-
-        // Get active products
-        $activeProducts = Product::where('vendor_id', $vendor->id)
-            ->where('is_active', true)
-            ->count();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'total_revenue' => $totalRevenue,
-                'total_orders' => $totalOrders,
-                'active_products' => $activeProducts,
-                'pending_orders' => $pendingOrders
-            ]
-        ]);
-    }
-
-    /**
-     * Get monthly revenue trend.
-     */
-    public function revenueTrend(Request $request)
-    {
-        $vendor = Auth::user()->vendor;
-        
-        if (!$vendor) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vendor not found'
-            ], 404);
-        }
-
-        $months = $request->get('months', 6);
-        $startDate = now()->subMonths($months);
-
-        $monthlyRevenue = Order::where('vendor_id', $vendor->id)
-            ->where('created_at', '>=', $startDate)
-            ->where('status', '!=', 'cancelled')
-            ->get()
-            ->groupBy(function ($order) {
-                return $order->created_at->format('Y-m');
-            })
-            ->map(function ($orders, $month) {
-                return [
-                    'month' => $month,
-                    'revenue' => $orders->sum('total_amount'),
-                    'orders' => $orders->count()
-                ];
-            })
-            ->values();
-
-        return response()->json([
-            'success' => true,
-            'data' => $monthlyRevenue
-        ]);
-    }
+    
 }

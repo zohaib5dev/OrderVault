@@ -184,32 +184,7 @@
           </div>
         </div>
 
-        <!-- Right Column - Vendor & Additional Info -->
-        <div class="lg:col-span-1 space-y-6">
-          <!-- Vendor Card -->
-          <div :class="[
-            'rounded-2xl shadow-lg p-6',
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          ]">
-            <h3 class="text-sm font-semibold uppercase tracking-wider mb-4" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">Vendor</h3>
-            <div v-if="product.vendor" class="space-y-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span class="text-blue-600 dark:text-blue-400 font-semibold">{{ getInitials(product.vendor.business_name || product.vendor.name) }}</span>
-                </div>
-                <div>
-                  <p class="font-medium" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ product.vendor.business_name || product.vendor.name }}</p>
-                  <p class="text-xs" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">{{ product.vendor.email }}</p>
-                </div>
-              </div>
-              <div v-if="product.vendor.phone" class="pt-3 border-t" :class="isDarkMode ? 'border-gray-700' : 'border-gray-100'">
-                <p class="text-xs" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">Phone</p>
-                <p class="text-sm" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ product.vendor.phone }}</p>
-              </div>
-            </div>
-            <p v-else class="text-sm" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">No vendor information available</p>
-          </div>
-        </div>
+       
       </div>
     </div>
 

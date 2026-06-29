@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-
+use App\Models\BusinessSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -21,13 +20,8 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $orders = Order::with(['vendor', 'customer', 'items.product'])
+        $orders = Order::with(['customer', 'items.product'])
             ->orderBy('created_at', 'desc');
-
-        if ($request->has('all') && $request->all) {
-        } else {
-            $orders->where('vendor_id', Auth::user()->vendor->id);
-        }
 
         if ($request->has('status') && $request->status) {
             $orders->where('status', $request->status);
@@ -36,7 +30,7 @@ class OrderController extends Controller
         if ($request->has('payment_status') && $request->payment_status) {
             $orders->where('payment_status', $request->payment_status);
         }
-         if ($request->has('search') && $request->search) {
+        if ($request->has('search') && $request->search) {
             $orders->search($request->search);
         }
 
@@ -53,7 +47,7 @@ class OrderController extends Controller
         return response()->json(['orders' => $orders, 'stats' => $stats]);
     }
 
-     public function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'customer_id' => 'required|exists:users,id',
@@ -73,7 +67,6 @@ class OrderController extends Controller
             DB::beginTransaction();
 
             $user = Auth::user();
-            $vendor = $user->vendor;
 
             // Calculate totals
             $subtotal = 0;
@@ -107,12 +100,7 @@ class OrderController extends Controller
                 ];
             }
 
-            // Calculate commission (vendor commission)
-            if ($vendor->commission_type == 'percentage') {
-                $commissionAmount = ($request->total * ($vendor->commission_rate ?? 0)) / 100;
-            } else {
-                $commissionAmount = $vendor->commission_rate ?? 0;
-            }
+
 
             $totalAmount = $request->total + $commissionAmount;
             // Generate order number
@@ -121,7 +109,6 @@ class OrderController extends Controller
             // Create order
             $order = Order::create([
                 'order_number' => $orderNumber,
-                'vendor_id' => $vendor->id,
                 'customer_id' => $request->customer_id,
                 'shipping_address' => $request->shipping_address,
                 'billing_address' => $request->billing_address ?? $request->shipping_address,
@@ -140,7 +127,6 @@ class OrderController extends Controller
                 'notes' => $request->notes,
                 'metadata' => [
                     'created_by' => $user->id,
-                    'vendor_name' => $vendor->business_name,
                     'customer_email' => User::find($request->customer_id)->email,
                     'items_count' => count($orderItems)
                 ]
@@ -174,7 +160,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['vendor', 'customer', 'items.product']);
+        $order->load(['customer', 'items.product']);
 
         return response($order);
     }
@@ -273,11 +259,10 @@ class OrderController extends Controller
     public function downloadInvoice(Request $request, $id)
     {
         $order = Order::with(['customer', 'items.product'])->findOrFail($id);
-
-        $vendor = Vendor::where('id', $order->vendor_id)->first();
-         $logoPath = null;
-        if ($vendor->business_logo) {
-            $logoPath = public_path('storage/' . $vendor->business_logo);
+        $settings = BusinessSetting::first();
+        $logoPath = null;
+        if ($settings->logo) {
+            $logoPath = public_path('storage/' . $settings->logo);
         }
         $data = [
             'invoice' => [
@@ -285,20 +270,13 @@ class OrderController extends Controller
                 'invoice_number' => 'INV-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
                 'date' => $order->created_at->format('F d, Y'),
             ],
-            'vendor' => $vendor,
+            'settings' => $settings,
             'logoPath' => $logoPath,
             'order' => $order->toArray(),
             'customer' => $order->customer->toArray(),
             'items' => $order->items->toArray(),
             'shipping_address' => $order->shipping_address,
             'billing_address' => $order->billing_address,
-            'company' => [
-                'name' => config('app.name', 'Your Company'),
-                'tagline' => 'Premium Services',
-                'address' => '123 Business St, City, State 12345',
-                'email' => 'info@company.com',
-                'phone' => '+1 (555) 123-4567',
-            ]
         ];
 
         // Generate PDF
@@ -328,9 +306,6 @@ class OrderController extends Controller
 
             $orders = Order::whereIn('id', $request->order_ids);
 
-            if ($user->isVendor()) {
-                $orders->where('vendor_id', $user->vendor->id);
-            }
 
             $orders->update(['status' => $request->status]);
 
