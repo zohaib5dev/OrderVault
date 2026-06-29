@@ -393,7 +393,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import CustomerModal from '../../../components/Modals/CustomerModal.vue';
+import CustomerModal from '../../../Components/Modals/CustomerModal.vue';
 
 const router = useRouter();
 const loading = ref(false);
